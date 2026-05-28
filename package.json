@@ -1,7 +1,7 @@
 {
-  "name": "block-syndicate",
+  "name": "Block Syndicate",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -33,5 +33,6 @@
     "typescript": "~6.0.3",
     "vite": "^8.0.14",
     "vitest": "^4.1.7"
-  }
+  },
+  "minimumReleaseAge": "1 day"
 }
