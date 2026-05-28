@@ -1,0 +1,64 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--ink-800) 60%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ink-800) 60%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 48px 48px;
+}
+
+.logo {
+  filter: drop-shadow(
+      0 0 24px color-mix(in srgb, var(--crimson-500) 40%, transparent)
+    )
+    drop-shadow(0 0 8px color-mix(in srgb, var(--cyan-500) 25%, transparent));
+}
+
+.tagline {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: calc(var(--space-8) * -1 + var(--space-4)) 0 0;
+}
+
+.startButton {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: transparent;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-12);
+  cursor: pointer;
+  box-shadow: var(--glow-primary-sm);
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    color 0.2s;
+}
+
+.startButton:hover {
+  background: var(--primary-subtle);
+  box-shadow: var(--glow-primary);
+  color: var(--crimson-300);
+}

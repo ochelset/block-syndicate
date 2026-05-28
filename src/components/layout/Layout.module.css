@@ -1,0 +1,12 @@
+.layout {
+  position: relative;
+  width: 100dvw;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.main {
+  position: absolute;
+  inset: 0;
+}
