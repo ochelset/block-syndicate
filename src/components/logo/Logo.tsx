@@ -3,7 +3,7 @@ import type { SVGProps } from 'react';
 export function BlockSyndicateLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 500 120"
+      viewBox="0 0 270 100"
       width="100%"
       height="100%"
       xmlns="http://w3.org"
