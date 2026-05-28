@@ -1,24 +1,49 @@
 import { useState } from 'react';
 import { Layout } from './components/layout/Layout';
+import { useGameState } from './features/game/useGameState';
+import { HUD } from './features/hud/HUD';
 import { GameMap } from './features/map/GameMap';
+import { PropertyDrawer } from './features/property/PropertyDrawer';
 import { StartScreen } from './features/start/StartScreen';
 import type { Modal, Screen } from './types';
 
 export function App() {
   const [screen, setScreen] = useState<Screen>('start');
   const [modal, setModal] = useState<Modal>(null);
+  const { state, dispatch, selectBlock, netWorth } = useGameState();
+
+  const ownedProperties = Object.values(state.properties).filter(
+    p => p.purchasePrice !== null,
+  );
+
+  const selectedProperty = state.selectedPropertyId
+    ? (state.properties[state.selectedPropertyId] ?? null)
+    : null;
 
   if (screen === 'start') {
     return <StartScreen onStart={() => setScreen('game')} />;
   }
 
   return (
-    <Layout
-      onOpenModal={setModal}
-      activeModal={modal}
-      onCloseModal={() => setModal(null)}
-    >
-      <GameMap />
-    </Layout>
+    <>
+      <Layout
+        onOpenModal={setModal}
+        activeModal={modal}
+        onCloseModal={() => setModal(null)}
+      >
+        <GameMap onBlockClick={selectBlock} ownedProperties={ownedProperties} />
+      </Layout>
+      <HUD
+        cash={state.cash}
+        netWorth={netWorth}
+        day={state.day}
+        rentAmount={state.lastRentAmount}
+      />
+      <PropertyDrawer
+        property={selectedProperty}
+        cash={state.cash}
+        dispatch={dispatch}
+      />
+    </>
   );
 }

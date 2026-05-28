@@ -1,0 +1,280 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.3s ease;
+  border: none;
+  cursor: default;
+  padding: 0;
+}
+
+.overlay.open .backdrop {
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.drawer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: color-mix(in srgb, var(--ink-950) 92%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--cyan-800);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-3) var(--space-4) var(--space-6);
+  padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+  transform: translateY(100%);
+  transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1);
+  pointer-events: auto;
+  box-shadow:
+    0 -4px 24px rgba(0, 243, 255, 0.08),
+    0 -1px 0 var(--cyan-900);
+}
+
+.drawer.owned {
+  border-top-color: var(--crimson-700);
+  box-shadow:
+    0 -4px 24px rgba(255, 42, 95, 0.1),
+    0 -1px 0 var(--crimson-900);
+}
+
+.overlay.open .drawer {
+  transform: translateY(0);
+}
+
+.handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto var(--space-4);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.propertyName {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-1);
+}
+
+.tierBadge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+}
+
+.tierBadge.vacant {
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: transparent;
+}
+
+.tierBadge.shop {
+  color: var(--cyan-400);
+  border-color: var(--cyan-700);
+  background: var(--cyan-950);
+}
+
+.tierBadge.restaurant {
+  color: var(--crimson-300);
+  border-color: var(--crimson-700);
+  background: var(--crimson-950);
+}
+
+.closeBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.closeBtn:hover {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.statBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.statLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}
+
+.statValue {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.statSub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.rentActive {
+  color: var(--cyan-400);
+  text-shadow: var(--glow-accent-sm);
+}
+
+.rentInactive {
+  color: var(--text-faint);
+}
+
+.upgradeHint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.upgradeLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.upgradePath {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.upgradeCost {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.btn {
+  flex: 1;
+  height: 48px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s,
+    opacity 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btnBuy {
+  background: var(--crimson-600);
+  border-color: var(--crimson-500);
+  color: #fff;
+}
+
+.btnBuy:not(:disabled):hover {
+  background: var(--crimson-500);
+  box-shadow: var(--glow-primary-sm);
+}
+
+.btnUpgrade {
+  background: transparent;
+  border-color: var(--cyan-600);
+  color: var(--cyan-400);
+}
+
+.btnUpgrade:not(:disabled):hover {
+  background: var(--cyan-950);
+  box-shadow: var(--glow-accent-sm);
+}
+
+.btnSell {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+  flex: 0 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.btnSell:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.cashHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.cashValue {
+  color: var(--cyan-500);
+}
