@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Installing React and dependencies
-        run: npm i -g pnpm && pnpm i --frozen-lockfile
+        run: npm i -g pnpm && pnpm i
 
       - name: Build and check the project
         run: pnpm check && pnpm build
