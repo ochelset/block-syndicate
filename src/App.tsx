@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Layout } from './components/layout/Layout';
 import { useGameState } from './features/game/useGameState';
 import { HUD } from './features/hud/HUD';
+import { InventoryModal } from './features/inventory/InventoryModal';
 import { GameMap } from './features/map/GameMap';
 import { PropertyDrawer } from './features/property/PropertyDrawer';
 import { StartScreen } from './features/start/StartScreen';
@@ -44,6 +45,12 @@ export function App() {
         cash={state.cash}
         dispatch={dispatch}
       />
+      {modal === 'inventory' && (
+        <InventoryModal
+          properties={ownedProperties}
+          onClose={() => setModal(null)}
+        />
+      )}
     </>
   );
 }
