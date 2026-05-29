@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-6);
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
@@ -21,21 +21,43 @@
   margin: 0;
 }
 
-.cardWrap {
-  perspective: 900px;
+/* ── Fan container ── */
+
+.fanContainer {
+  position: relative;
+  width: 460px;
+  height: 360px;
 }
 
-.card {
+.fanCard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 220px;
   height: 310px;
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: -155px -110px;
+  transition:
+    transform 0.38s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.32s ease,
+    filter 0.32s ease;
+  will-change: transform;
 }
 
-.card.flipped {
+/* ── Card inner (3-D flip) ── */
+
+.fanCardInner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.52s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fanCardInner.flipped {
   transform: rotateY(180deg);
 }
+
+/* ── Card faces ── */
 
 .cardBack,
 .cardFront {
@@ -76,6 +98,7 @@
   font-size: 64px;
   font-weight: 700;
   color: var(--border);
+  user-select: none;
 }
 
 .cardFront {
@@ -87,13 +110,15 @@
 
 .cardFront.positive {
   border-color: var(--cyan-700);
-  box-shadow: 0 0 32px rgba(0, 243, 255, 0.12);
+  box-shadow: 0 0 32px rgba(0, 243, 255, 0.14);
 }
 
 .cardFront.negative {
   border-color: var(--crimson-700);
-  box-shadow: 0 0 32px rgba(255, 42, 95, 0.12);
+  box-shadow: 0 0 32px rgba(255, 42, 95, 0.14);
 }
+
+/* ── Card content ── */
 
 .cardSymbol {
   font-family: var(--font-mono);
@@ -152,6 +177,37 @@
   border: 1px solid var(--crimson-800);
 }
 
+/* ── Hover hint label ── */
+
+.cardHoverHint {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--cyan-500);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.cardHoverHintVisible {
+  opacity: 1;
+}
+
+/* ── Buttons ── */
+
+.btnArea {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .btn {
   font-family: var(--font-mono);
   font-size: 13px;
@@ -168,7 +224,8 @@
     color 0.15s,
     border-color 0.15s,
     box-shadow 0.15s;
-  min-width: 160px;
+  min-width: 200px;
+  animation: fadeInUp 0.22s ease both;
 }
 
 .btn:hover {
@@ -177,21 +234,25 @@
   box-shadow: var(--glow-accent-sm);
 }
 
+.btnVelg {
+  border-color: var(--cyan-700);
+  color: var(--cyan-300);
+}
+
 .btnContinue {
   border-color: var(--cyan-700);
   color: var(--cyan-300);
-  animation: fadeIn 0.25s ease;
 }
 
 .btnPlaceholder {
   height: 44px;
-  min-width: 160px;
+  min-width: 200px;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;

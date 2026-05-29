@@ -1,6 +1,14 @@
 import type { Property, PropertyTier } from './gameTypes';
 
+export interface NeighborhoodInfo {
+  multiplier: number;
+  shops: number;
+  restaurants: number;
+}
+
 const OSLO_CENTER = { lat: 59.9139, lng: 10.7522 };
+const FLOOR_HEIGHT = 3.5; // meters per floor
+const DEFAULT_GFA = 200; // m² BTA fallback when no area/height data
 
 const RENT_RATE: Record<PropertyTier, number> = {
   vacant: 0.005,
@@ -41,10 +49,18 @@ function haversineKm(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function deriveBasePrice(lat: number, lng: number): number {
+export function deriveBasePrice(
+  lat: number,
+  lng: number,
+  area?: number,
+  height?: number,
+): number {
   const km = haversineKm(lat, lng, OSLO_CENTER.lat, OSLO_CENTER.lng);
-  const raw = 18_000_000 * Math.exp(-0.55 * km) + 300_000;
-  return Math.round(raw / 100_000) * 100_000;
+  const pricePerSqm = 90_000 * Math.exp(-0.55 * km) + 2_000;
+  const floors =
+    height !== undefined ? Math.max(1, Math.round(height / FLOOR_HEIGHT)) : 1;
+  const gfa = area !== undefined ? area * floors : DEFAULT_GFA;
+  return Math.round((pricePerSqm * gfa) / 100_000) * 100_000;
 }
 
 export function derivePropertyName(lat: number, lng: number): string {
@@ -94,7 +110,7 @@ export function buildProperty(
   area?: number,
   featureIds?: (number | string)[],
 ): Property {
-  const basePrice = deriveBasePrice(rawLat, rawLng);
+  const basePrice = deriveBasePrice(rawLat, rawLng, area, height);
   return {
     id: String(featureId),
     featureId,
@@ -134,6 +150,59 @@ export function tickMarketPrice(
   return (
     Math.round(Math.max(basePrice * 0.4, basePrice * pct) / 10_000) * 10_000
   );
+}
+
+const NEIGHBORHOOD_RADIUS_KM = 0.5;
+const NEIGHBORHOOD_CAP = 4;
+
+export function calcNeighborhoodInfo(
+  propId: string,
+  properties: Record<string, Property>,
+): NeighborhoodInfo {
+  const self = properties[propId];
+  if (!self) return { multiplier: 1, shops: 0, restaurants: 0 };
+
+  let shops = 0;
+  let restaurants = 0;
+  for (const [id, p] of Object.entries(properties)) {
+    if (id === propId || p.purchasePrice === null || p.tier === 'vacant')
+      continue;
+    if (
+      haversineKm(self.lat, self.lng, p.lat, p.lng) <= NEIGHBORHOOD_RADIUS_KM
+    ) {
+      if (p.tier === 'shop') shops++;
+      else if (p.tier === 'restaurant') restaurants++;
+    }
+  }
+
+  const total = shops + restaurants;
+  if (total === 0) return { multiplier: 1, shops: 0, restaurants: 0 };
+
+  const density = Math.min(total / NEIGHBORHOOD_CAP, 1);
+  const diversity = shops > 0 && restaurants > 0 ? 1 : 0.5;
+  const multiplier = Math.round((1 + 0.5 * density * diversity) * 100) / 100;
+  return { multiplier, shops, restaurants };
+}
+
+export function applyNeighborhoodRents(
+  properties: Record<string, Property>,
+): Record<string, Property> {
+  const result: Record<string, Property> = {};
+  for (const [id, prop] of Object.entries(properties)) {
+    if (prop.purchasePrice === null) {
+      result[id] = prop;
+      continue;
+    }
+    const { multiplier } = calcNeighborhoodInfo(id, properties);
+    result[id] = {
+      ...prop,
+      neighborhoodMultiplier: multiplier,
+      rentPerDay: Math.round(
+        calcRentPerDay(prop.marketPrice, prop.tier) * multiplier,
+      ),
+    };
+  }
+  return result;
 }
 
 export function hashId(id: string): number {

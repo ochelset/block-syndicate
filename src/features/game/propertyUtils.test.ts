@@ -91,7 +91,7 @@ describe('tierLabel', () => {
 
 describe('deriveBasePrice', () => {
   it('prices city centre higher than outskirts', () => {
-    const centre = deriveBasePrice(59.9139, 10.7522); // Oslo S
+    const centre = deriveBasePrice(59.9139, 10.7522);
     const outskirts = deriveBasePrice(59.85, 10.55);
     expect(centre).toBeGreaterThan(outskirts);
   });
@@ -100,5 +100,23 @@ describe('deriveBasePrice', () => {
     const price = deriveBasePrice(59.9139, 10.7522);
     expect(price).toBeGreaterThan(0);
     expect(price % 100_000).toBe(0);
+  });
+
+  it('larger footprint means higher price at same location', () => {
+    const small = deriveBasePrice(59.9139, 10.7522, 100, 3.5);
+    const large = deriveBasePrice(59.9139, 10.7522, 500, 3.5);
+    expect(large).toBeGreaterThan(small);
+  });
+
+  it('more floors means proportionally higher price', () => {
+    const oneFloor = deriveBasePrice(59.9139, 10.7522, 200, 3.5);
+    const threeFloors = deriveBasePrice(59.9139, 10.7522, 200, 10.5);
+    expect(threeFloors).toBeCloseTo(oneFloor * 3, -6);
+  });
+
+  it('falls back to default GFA when no area/height given', () => {
+    const withDefaults = deriveBasePrice(59.9139, 10.7522);
+    const explicit200 = deriveBasePrice(59.9139, 10.7522, 200, 3.5); // 200m² × 1 floor
+    expect(withDefaults).toBe(explicit200);
   });
 });

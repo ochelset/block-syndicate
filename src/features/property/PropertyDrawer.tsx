@@ -1,4 +1,5 @@
 import type { GameAction, PricePoint, Property } from '../game/gameTypes';
+import type { NeighborhoodInfo } from '../game/propertyUtils';
 import {
   calcUpgradeCost,
   formatMoney,
@@ -13,6 +14,7 @@ interface PropertyDrawerProps {
   actionsLeft: number;
   phase: 'action' | 'card';
   pendingDiscount: number;
+  neighborhoodInfo: NeighborhoodInfo | null;
   dispatch: (action: GameAction) => void;
 }
 
@@ -126,6 +128,7 @@ export function PropertyDrawer({
   actionsLeft,
   phase,
   pendingDiscount,
+  neighborhoodInfo,
   dispatch,
 }: PropertyDrawerProps) {
   const isOpen = property !== null;
@@ -230,6 +233,25 @@ export function PropertyDrawer({
                 )}
               </div>
             </div>
+
+            {neighborhoodInfo && neighborhoodInfo.multiplier > 1 && (
+              <div className={styles.neighborhoodRow}>
+                <span className={styles.neighborhoodLabel}>NABOLAG</span>
+                <span className={styles.neighborhoodMult}>
+                  ×{neighborhoodInfo.multiplier.toFixed(2)}
+                </span>
+                <span className={styles.neighborhoodDetail}>
+                  {[
+                    neighborhoodInfo.shops > 0 &&
+                      `${neighborhoodInfo.shops} butikk${neighborhoodInfo.shops > 1 ? 'er' : ''}`,
+                    neighborhoodInfo.restaurants > 0 &&
+                      `${neighborhoodInfo.restaurants} restaurant${neighborhoodInfo.restaurants > 1 ? 'er' : ''}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              </div>
+            )}
 
             {isOwned && property.priceHistory && (
               <Sparkline

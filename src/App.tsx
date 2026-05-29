@@ -3,7 +3,7 @@ import styles from './App.module.css';
 import { deleteSave, loadSave } from './api/storage';
 import { Layout } from './components/layout/Layout';
 import { CardModal } from './features/card/CardModal';
-import { formatMoney } from './features/game/propertyUtils';
+import { calcNeighborhoodInfo, formatMoney } from './features/game/propertyUtils';
 import { useGameState } from './features/game/useGameState';
 import { HUD } from './features/hud/HUD';
 import { InventoryModal } from './features/inventory/InventoryModal';
@@ -26,6 +26,10 @@ export function App() {
 
   const selectedProperty = state.selectedPropertyId
     ? (state.properties[state.selectedPropertyId] ?? null)
+    : null;
+
+  const neighborhoodInfo = selectedProperty
+    ? calcNeighborhoodInfo(selectedProperty.id, state.properties)
     : null;
 
   function handleNewGame() {
@@ -81,10 +85,12 @@ export function App() {
         actionsLeft={state.actionsLeft}
         phase={state.phase}
         pendingDiscount={state.pendingDiscount}
+        neighborhoodInfo={neighborhoodInfo}
         dispatch={dispatch}
       />
       {state.phase === 'card' && (
         <CardModal
+          cardHand={state.cardHand}
           activeCard={state.activeCard}
           day={state.day}
           dispatch={dispatch}

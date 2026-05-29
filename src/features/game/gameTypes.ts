@@ -21,6 +21,7 @@ export interface Property {
   purchasePrice: number | null;
   tier: PropertyTier;
   rentPerDay: number;
+  neighborhoodMultiplier?: number;
   priceHistory?: PricePoint[];
 }
 
@@ -60,6 +61,7 @@ export interface GameState {
   actionsLeft: number;
   deck: Card[];
   discard: Card[];
+  cardHand: Card[];
   activeCard: Card | null;
   activeEffects: ActiveEffect[];
   pendingDiscount: number;
@@ -81,6 +83,7 @@ export type GameAction =
     }
   | { type: 'END_DAY' }
   | { type: 'DRAW_CARD' }
+  | { type: 'SELECT_OFFERED_CARD'; index: number }
   | { type: 'DISMISS_CARD' }
   | { type: 'RESET'; state?: GameState }
   | { type: 'TICK' };

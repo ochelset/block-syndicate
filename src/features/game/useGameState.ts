@@ -11,7 +11,9 @@ import type {
   PropertyTier,
 } from './gameTypes';
 import {
+  applyNeighborhoodRents,
   buildProperty,
+  calcNeighborhoodInfo,
   calcRentPerDay,
   calcUpgradeCost,
   hashId,
@@ -34,6 +36,7 @@ const defaultState: GameState = {
   actionsLeft: BASE_AP,
   deck: createDeck(),
   discard: [],
+  cardHand: [],
   activeCard: null,
   activeEffects: [],
   pendingDiscount: 0,
@@ -78,16 +81,23 @@ function applyTick(
     const newMarketPrice =
       Math.round((rawPrice * priceMultiplier) / 10_000) * 10_000;
     const isOwned = prop.purchasePrice !== null;
-    const rent = isOwned
-      ? Math.round(calcRentPerDay(newMarketPrice, prop.tier) * rentMultiplier)
-      : 0;
-    if (isOwned) totalRent += rent;
+    let rent = 0;
+    let neighborhoodMultiplier: number | undefined;
+    if (isOwned) {
+      const info = calcNeighborhoodInfo(id, properties);
+      neighborhoodMultiplier = info.multiplier;
+      rent = Math.round(
+        calcRentPerDay(newMarketPrice, prop.tier) * info.multiplier * rentMultiplier,
+      );
+      totalRent += rent;
+    }
     const newPoint: PricePoint = { day: nextDay, price: newMarketPrice };
     updatedProps[id] = {
       ...prop,
       marketPrice: newMarketPrice,
       rentPerDay: rent,
       ...(isOwned && {
+        neighborhoodMultiplier,
         priceHistory: [...(prop.priceHistory ?? []), newPoint],
       }),
     };
@@ -128,12 +138,15 @@ export function reducer(state: GameState, action: GameAction): GameState {
         rentPerDay: calcRentPerDay(prop.marketPrice, prop.tier),
         priceHistory: [{ day: state.day, price: prop.marketPrice }],
       };
+      const newApBuy = state.actionsLeft - 1;
       return {
         ...state,
         cash: state.cash - effectivePrice,
-        actionsLeft: state.actionsLeft - 1,
+        actionsLeft: newApBuy,
+        phase: newApBuy === 0 ? 'card' : state.phase,
+        selectedPropertyId: newApBuy === 0 ? null : state.selectedPropertyId,
         pendingDiscount: 0,
-        properties: { ...state.properties, [prop.id]: updated },
+        properties: applyNeighborhoodRents({ ...state.properties, [prop.id]: updated }),
       };
     }
 
@@ -148,11 +161,14 @@ export function reducer(state: GameState, action: GameAction): GameState {
         rentPerDay: 0,
         priceHistory: undefined,
       };
+      const newApSell = state.actionsLeft - 1;
       return {
         ...state,
         cash: state.cash + prop.marketPrice,
-        actionsLeft: state.actionsLeft - 1,
-        properties: { ...state.properties, [prop.id]: updated },
+        actionsLeft: newApSell,
+        phase: newApSell === 0 ? 'card' : state.phase,
+        selectedPropertyId: newApSell === 0 ? null : state.selectedPropertyId,
+        properties: applyNeighborhoodRents({ ...state.properties, [prop.id]: updated }),
       };
     }
 
@@ -168,11 +184,14 @@ export function reducer(state: GameState, action: GameAction): GameState {
         tier: next,
         rentPerDay: calcRentPerDay(prop.marketPrice, next),
       };
+      const newApUpgrade = state.actionsLeft - 1;
       return {
         ...state,
         cash: state.cash - cost,
-        actionsLeft: state.actionsLeft - 1,
-        properties: { ...state.properties, [prop.id]: updated },
+        actionsLeft: newApUpgrade,
+        phase: newApUpgrade === 0 ? 'card' : state.phase,
+        selectedPropertyId: newApUpgrade === 0 ? null : state.selectedPropertyId,
+        properties: applyNeighborhoodRents({ ...state.properties, [prop.id]: updated }),
       };
     }
 
@@ -195,23 +214,30 @@ export function reducer(state: GameState, action: GameAction): GameState {
 
     case 'END_DAY':
       if (state.phase !== 'action') return state;
-      return { ...state, phase: 'card' };
+      return { ...state, phase: 'card', selectedPropertyId: null };
 
     case 'DRAW_CARD': {
-      if (state.phase !== 'card' || state.activeCard !== null) return state;
-      let deck = state.deck;
-      let discard = state.discard;
-      if (deck.length === 0) {
-        deck = shuffle([...discard]);
+      if (state.phase !== 'card' || state.cardHand.length > 0) return state;
+      let deck = [...state.deck];
+      let discard = [...state.discard];
+      // Ensure at least 3 cards available
+      if (deck.length < 3) {
+        deck = [...deck, ...shuffle(discard)];
         discard = [];
       }
-      const [card, ...remaining] = deck;
+      const hand = deck.splice(0, 3);
       return {
         ...state,
-        activeCard: card,
-        deck: remaining,
-        discard: [...discard, card],
+        cardHand: hand,
+        deck,
+        discard: [...discard, ...hand],
       };
+    }
+
+    case 'SELECT_OFFERED_CARD': {
+      const card = state.cardHand[action.index];
+      if (!card) return state;
+      return { ...state, activeCard: card };
     }
 
     case 'DISMISS_CARD': {
@@ -304,6 +330,7 @@ export function reducer(state: GameState, action: GameAction): GameState {
         properties: updatedProps,
         activeEffects: nextEffects,
         pendingDiscount,
+        cardHand: [],
         activeCard: null,
         phase: 'action',
         actionsLeft: BASE_AP + bonusAp,
@@ -315,6 +342,7 @@ export function reducer(state: GameState, action: GameAction): GameState {
       return action.state
         ? {
             ...action.state,
+            cardHand: action.state.cardHand ?? [],
             selectedPropertyId: null,
             activeCard: null,
             phase: 'action',

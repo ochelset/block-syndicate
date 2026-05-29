@@ -36,8 +36,9 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     lastRentAmount: 0,
     phase: 'action',
     actionsLeft: 3,
-    deck: [DUMMY_CARD],
+    deck: [DUMMY_CARD, DUMMY_CARD, DUMMY_CARD],
     discard: [],
+    cardHand: [],
     activeCard: null,
     activeEffects: [],
     pendingDiscount: 0,
@@ -241,32 +242,33 @@ describe('END_DAY', () => {
 });
 
 describe('DRAW_CARD', () => {
-  it('pulls a card from the deck and sets activeCard', () => {
-    const state = makeState({
-      phase: 'card',
-      deck: [DUMMY_CARD],
-      activeCard: null,
-    });
+  it('deals 3 cards into cardHand from the deck', () => {
+    const c1 = { ...DUMMY_CARD, id: 'c1' };
+    const c2 = { ...DUMMY_CARD, id: 'c2' };
+    const c3 = { ...DUMMY_CARD, id: 'c3' };
+    const state = makeState({ phase: 'card', deck: [c1, c2, c3], cardHand: [] });
     const next = reducer(state, { type: 'DRAW_CARD' });
-    expect(next.activeCard).toEqual(DUMMY_CARD);
+    expect(next.cardHand).toHaveLength(3);
     expect(next.deck).toHaveLength(0);
-    expect(next.discard).toContain(DUMMY_CARD);
+    expect(next.discard).toHaveLength(3);
   });
 
-  it('reshuffles discard into deck when deck is empty', () => {
+  it('reshuffles discard into deck when fewer than 3 cards remain', () => {
+    const c1 = { ...DUMMY_CARD, id: 'c1' };
+    const c2 = { ...DUMMY_CARD, id: 'c2' };
+    const c3 = { ...DUMMY_CARD, id: 'c3' };
     const state = makeState({
       phase: 'card',
-      deck: [],
-      discard: [DUMMY_CARD],
-      activeCard: null,
+      deck: [c1],
+      discard: [c2, c3],
+      cardHand: [],
     });
     const next = reducer(state, { type: 'DRAW_CARD' });
-    expect(next.activeCard).toEqual(DUMMY_CARD);
-    expect(next.discard).toHaveLength(1);
+    expect(next.cardHand).toHaveLength(3);
   });
 
-  it('is a no-op when activeCard is already set', () => {
-    const state = makeState({ phase: 'card', activeCard: DUMMY_CARD });
+  it('is a no-op when cardHand already has cards', () => {
+    const state = makeState({ phase: 'card', cardHand: [DUMMY_CARD, DUMMY_CARD, DUMMY_CARD] });
     expect(reducer(state, { type: 'DRAW_CARD' })).toBe(state);
   });
 });

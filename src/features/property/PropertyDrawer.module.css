@@ -170,6 +170,43 @@
   color: var(--crimson-400);
 }
 
+.neighborhoodRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.neighborhoodLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.neighborhoodMult {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cyan-400);
+  text-shadow: var(--glow-accent-sm);
+  flex-shrink: 0;
+}
+
+.neighborhoodDetail {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  flex: 1;
+  text-align: right;
+}
+
 .chartWrap {
   margin-bottom: var(--space-4);
 }
