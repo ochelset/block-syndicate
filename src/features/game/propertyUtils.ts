@@ -92,11 +92,13 @@ export function buildProperty(
   rawLng: number,
   height?: number,
   area?: number,
+  featureIds?: (number | string)[],
 ): Property {
   const basePrice = deriveBasePrice(rawLat, rawLng);
   return {
     id: String(featureId),
     featureId,
+    ...(featureIds && featureIds.length > 1 && { featureIds }),
     name: derivePropertyName(rawLat, rawLng),
     lat: rawLat,
     lng: rawLng,

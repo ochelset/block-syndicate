@@ -1,4 +1,5 @@
 import { formatMoney } from '../game/propertyUtils';
+import { GOAL_NET_WORTH } from '../game/useGameState';
 import styles from './HUD.module.css';
 
 interface HUDProps {
@@ -6,13 +7,45 @@ interface HUDProps {
   netWorth: number;
   day: number;
   rentAmount: number;
+  actionsLeft: number;
+  phase: 'action' | 'card';
+  onEndDay: () => void;
 }
 
-export function HUD({ cash, netWorth, day, rentAmount }: HUDProps) {
-  const goalProgress = Math.min(netWorth / 1_000_000_000, 1);
+export function HUD({
+  cash,
+  netWorth,
+  day,
+  rentAmount,
+  actionsLeft,
+  phase,
+  onEndDay,
+}: HUDProps) {
+  const goalProgress = Math.min(netWorth / GOAL_NET_WORTH, 1);
 
   return (
     <div className={styles.hud}>
+      <div className={styles.apRow}>
+        <div className={styles.apDots}>
+          {[0, 1, 2].map(i => (
+            <span
+              key={i}
+              className={`${styles.apDot} ${i < Math.min(actionsLeft, 3) ? styles.apDotFull : ''}`}
+            />
+          ))}
+          {actionsLeft > 3 && (
+            <span className={styles.apBonus}>+{actionsLeft - 3}</span>
+          )}
+        </div>
+        <button
+          type="button"
+          className={styles.endDayBtn}
+          onClick={onEndDay}
+          disabled={phase !== 'action'}
+        >
+          AVSLUTT DAG
+        </button>
+      </div>
       <div className={styles.bar}>
         <div className={styles.stat}>
           <span className={styles.label}>CASH</span>

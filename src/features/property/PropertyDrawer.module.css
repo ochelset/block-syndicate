@@ -162,6 +162,49 @@
   color: var(--text-muted);
 }
 
+.deltaUp {
+  color: var(--cyan-400);
+}
+
+.deltaDown {
+  color: var(--crimson-400);
+}
+
+.chartWrap {
+  margin-bottom: var(--space-4);
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.chartLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}
+
+.chartScale {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  opacity: 0.6;
+}
+
+.chartSvg {
+  display: block;
+  width: 100%;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
 .statValueSm {
   font-family: var(--font-mono);
   font-size: 16px;
@@ -273,6 +316,20 @@
 .btnSell:hover {
   border-color: var(--border);
   color: var(--text);
+}
+
+.strikePrice {
+  text-decoration: line-through;
+  opacity: 0.5;
+  font-size: 10px;
+}
+
+.apHint {
+  color: var(--cyan-500);
+}
+
+.apHintEmpty {
+  color: var(--text-faint);
 }
 
 .cashHint {

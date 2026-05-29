@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { GameState, Property } from './gameTypes';
+import type { Card, GameState, Property } from './gameTypes';
 import { reducer } from './useGameState';
+
+const DUMMY_CARD: Card = {
+  id: 'test-card',
+  title: 'Test',
+  description: 'Test card',
+  polarity: 'positive',
+  effect: { type: 'cash', amount: 1_000_000 },
+};
 
 function makeProperty(overrides: Partial<Property> = {}): Property {
   return {
@@ -26,6 +34,14 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     properties: {},
     selectedPropertyId: null,
     lastRentAmount: 0,
+    phase: 'action',
+    actionsLeft: 3,
+    deck: [DUMMY_CARD],
+    discard: [],
+    activeCard: null,
+    activeEffects: [],
+    pendingDiscount: 0,
+    won: false,
     ...overrides,
   };
 }
@@ -53,7 +69,7 @@ describe('SELECT_PROPERTY', () => {
 });
 
 describe('BUY_PROPERTY', () => {
-  it('deducts cash and sets purchasePrice', () => {
+  it('deducts cash, sets purchasePrice, and decrements AP', () => {
     const prop = makeProperty({ marketPrice: 1_000_000 });
     const state = makeState({
       cash: 5_000_000,
@@ -66,37 +82,60 @@ describe('BUY_PROPERTY', () => {
     expect(next.cash).toBe(4_000_000);
     expect(next.properties['test-id'].purchasePrice).toBe(1_000_000);
     expect(next.properties['test-id'].rentPerDay).toBeGreaterThan(0);
+    expect(next.actionsLeft).toBe(2);
+  });
+
+  it('applies pendingDiscount and clears it', () => {
+    const prop = makeProperty({ marketPrice: 1_000_000 });
+    const state = makeState({
+      cash: 5_000_000,
+      properties: { 'test-id': prop },
+      pendingDiscount: 0.5,
+    });
+    const next = reducer(state, {
+      type: 'BUY_PROPERTY',
+      propertyId: 'test-id',
+    });
+    expect(next.cash).toBe(4_500_000);
+    expect(next.properties['test-id'].purchasePrice).toBe(500_000);
+    expect(next.pendingDiscount).toBe(0);
   });
 
   it('is a no-op when cash is insufficient', () => {
     const prop = makeProperty({ marketPrice: 1_000_000 });
     const state = makeState({ cash: 500_000, properties: { 'test-id': prop } });
-    const next = reducer(state, {
-      type: 'BUY_PROPERTY',
-      propertyId: 'test-id',
-    });
-    expect(next).toBe(state);
+    expect(
+      reducer(state, { type: 'BUY_PROPERTY', propertyId: 'test-id' }),
+    ).toBe(state);
   });
 
-  it('is a no-op when property is already owned', () => {
-    const prop = makeProperty({ purchasePrice: 900_000 });
-    const state = makeState({ properties: { 'test-id': prop } });
-    const next = reducer(state, {
-      type: 'BUY_PROPERTY',
-      propertyId: 'test-id',
+  it('is a no-op when AP is exhausted', () => {
+    const prop = makeProperty({ marketPrice: 1_000_000 });
+    const state = makeState({
+      cash: 5_000_000,
+      actionsLeft: 0,
+      properties: { 'test-id': prop },
     });
-    expect(next).toBe(state);
+    expect(
+      reducer(state, { type: 'BUY_PROPERTY', propertyId: 'test-id' }),
+    ).toBe(state);
   });
 
-  it('is a no-op for unknown propertyId', () => {
-    const state = makeState();
-    const next = reducer(state, { type: 'BUY_PROPERTY', propertyId: 'ghost' });
-    expect(next).toBe(state);
+  it('is a no-op during card phase', () => {
+    const prop = makeProperty({ marketPrice: 1_000_000 });
+    const state = makeState({
+      cash: 5_000_000,
+      phase: 'card',
+      properties: { 'test-id': prop },
+    });
+    expect(
+      reducer(state, { type: 'BUY_PROPERTY', propertyId: 'test-id' }),
+    ).toBe(state);
   });
 });
 
 describe('SELL_PROPERTY', () => {
-  it('returns marketPrice to cash and resets property to vacant', () => {
+  it('returns marketPrice to cash, resets to vacant, and decrements AP', () => {
     const prop = makeProperty({
       purchasePrice: 900_000,
       marketPrice: 1_100_000,
@@ -112,21 +151,20 @@ describe('SELL_PROPERTY', () => {
     expect(next.properties['test-id'].purchasePrice).toBeNull();
     expect(next.properties['test-id'].tier).toBe('vacant');
     expect(next.properties['test-id'].rentPerDay).toBe(0);
+    expect(next.actionsLeft).toBe(2);
   });
 
   it('is a no-op for an unowned property', () => {
     const prop = makeProperty();
     const state = makeState({ properties: { 'test-id': prop } });
-    const next = reducer(state, {
-      type: 'SELL_PROPERTY',
-      propertyId: 'test-id',
-    });
-    expect(next).toBe(state);
+    expect(
+      reducer(state, { type: 'SELL_PROPERTY', propertyId: 'test-id' }),
+    ).toBe(state);
   });
 });
 
 describe('UPGRADE_PROPERTY', () => {
-  it('deducts cost, advances tier, and recalculates rent', () => {
+  it('deducts cost, advances tier, recalculates rent, and decrements AP', () => {
     const prop = makeProperty({
       purchasePrice: 1_000_000,
       tier: 'vacant',
@@ -141,8 +179,9 @@ describe('UPGRADE_PROPERTY', () => {
       type: 'UPGRADE_PROPERTY',
       propertyId: 'test-id',
     });
-    expect(next.cash).toBe(3_000_000); // 5M - 2× basePrice
+    expect(next.cash).toBe(3_000_000);
     expect(next.properties['test-id'].tier).toBe('shop');
+    expect(next.actionsLeft).toBe(2);
   });
 
   it('is a no-op when cash is insufficient', () => {
@@ -151,21 +190,17 @@ describe('UPGRADE_PROPERTY', () => {
       basePrice: 1_000_000,
     });
     const state = makeState({ cash: 0, properties: { 'test-id': prop } });
-    const next = reducer(state, {
-      type: 'UPGRADE_PROPERTY',
-      propertyId: 'test-id',
-    });
-    expect(next).toBe(state);
+    expect(
+      reducer(state, { type: 'UPGRADE_PROPERTY', propertyId: 'test-id' }),
+    ).toBe(state);
   });
 
   it('is a no-op at max tier (restaurant)', () => {
     const prop = makeProperty({ purchasePrice: 1_000_000, tier: 'restaurant' });
     const state = makeState({ properties: { 'test-id': prop } });
-    const next = reducer(state, {
-      type: 'UPGRADE_PROPERTY',
-      propertyId: 'test-id',
-    });
-    expect(next).toBe(state);
+    expect(
+      reducer(state, { type: 'UPGRADE_PROPERTY', propertyId: 'test-id' }),
+    ).toBe(state);
   });
 });
 
@@ -183,12 +218,92 @@ describe('SET_PROPERTY_NAME', () => {
 
   it('is a no-op for unknown propertyId', () => {
     const state = makeState();
-    const next = reducer(state, {
-      type: 'SET_PROPERTY_NAME',
-      propertyId: 'ghost',
-      name: 'Anywhere',
+    expect(
+      reducer(state, {
+        type: 'SET_PROPERTY_NAME',
+        propertyId: 'ghost',
+        name: 'X',
+      }),
+    ).toBe(state);
+  });
+});
+
+describe('END_DAY', () => {
+  it('transitions phase to card', () => {
+    const state = makeState({ phase: 'action' });
+    expect(reducer(state, { type: 'END_DAY' }).phase).toBe('card');
+  });
+
+  it('is a no-op when already in card phase', () => {
+    const state = makeState({ phase: 'card' });
+    expect(reducer(state, { type: 'END_DAY' })).toBe(state);
+  });
+});
+
+describe('DRAW_CARD', () => {
+  it('pulls a card from the deck and sets activeCard', () => {
+    const state = makeState({
+      phase: 'card',
+      deck: [DUMMY_CARD],
+      activeCard: null,
     });
-    expect(next).toBe(state);
+    const next = reducer(state, { type: 'DRAW_CARD' });
+    expect(next.activeCard).toEqual(DUMMY_CARD);
+    expect(next.deck).toHaveLength(0);
+    expect(next.discard).toContain(DUMMY_CARD);
+  });
+
+  it('reshuffles discard into deck when deck is empty', () => {
+    const state = makeState({
+      phase: 'card',
+      deck: [],
+      discard: [DUMMY_CARD],
+      activeCard: null,
+    });
+    const next = reducer(state, { type: 'DRAW_CARD' });
+    expect(next.activeCard).toEqual(DUMMY_CARD);
+    expect(next.discard).toHaveLength(1);
+  });
+
+  it('is a no-op when activeCard is already set', () => {
+    const state = makeState({ phase: 'card', activeCard: DUMMY_CARD });
+    expect(reducer(state, { type: 'DRAW_CARD' })).toBe(state);
+  });
+});
+
+describe('DISMISS_CARD', () => {
+  it('advances the day, resets phase and AP', () => {
+    const state = makeState({ phase: 'card', activeCard: DUMMY_CARD, day: 3 });
+    const next = reducer(state, { type: 'DISMISS_CARD' });
+    expect(next.day).toBe(4);
+    expect(next.phase).toBe('action');
+    expect(next.actionsLeft).toBe(3);
+    expect(next.activeCard).toBeNull();
+  });
+
+  it('cash effect adds to cash before tick', () => {
+    const state = makeState({
+      cash: 5_000_000,
+      phase: 'card',
+      activeCard: DUMMY_CARD,
+    });
+    const next = reducer(state, { type: 'DISMISS_CARD' });
+    expect(next.cash).toBeGreaterThan(5_000_000);
+  });
+
+  it('ap_bonus card gives extra AP next day', () => {
+    const apCard: Card = {
+      ...DUMMY_CARD,
+      effect: { type: 'ap_bonus', ap: 2 },
+    };
+    const state = makeState({ phase: 'card', activeCard: apCard });
+    const next = reducer(state, { type: 'DISMISS_CARD' });
+    expect(next.actionsLeft).toBe(5);
+  });
+
+  it('is a no-op when activeCard is null', () => {
+    const state = makeState({ phase: 'card', activeCard: null });
+    expect(reducer(state, { type: 'DISMISS_CARD' })).toBe(state);
   });
 });
 
@@ -232,8 +347,9 @@ describe('TICK', () => {
 describe('DESELECT_PROPERTY', () => {
   it('clears selectedPropertyId', () => {
     const state = makeState({ selectedPropertyId: 'test-id' });
-    const next = reducer(state, { type: 'DESELECT_PROPERTY' });
-    expect(next.selectedPropertyId).toBeNull();
+    expect(
+      reducer(state, { type: 'DESELECT_PROPERTY' }).selectedPropertyId,
+    ).toBeNull();
   });
 });
 
@@ -244,17 +360,22 @@ describe('RESET', () => {
     expect(next.cash).toBe(100_000_000);
     expect(next.day).toBe(1);
     expect(next.properties).toEqual({});
+    expect(next.phase).toBe('action');
+    expect(next.actionsLeft).toBe(3);
   });
 
-  it('restores provided state and clears selectedPropertyId', () => {
+  it('restores provided state and clears selectedPropertyId and activeCard', () => {
     const saved = makeState({
       cash: 5_000_000,
       day: 14,
       selectedPropertyId: 'old',
+      activeCard: DUMMY_CARD,
     });
     const next = reducer(makeState(), { type: 'RESET', state: saved });
     expect(next.cash).toBe(5_000_000);
     expect(next.day).toBe(14);
     expect(next.selectedPropertyId).toBeNull();
+    expect(next.activeCard).toBeNull();
+    expect(next.phase).toBe('action');
   });
 });

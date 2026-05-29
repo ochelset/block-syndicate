@@ -7,6 +7,77 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.apRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  height: 36px;
+  background: color-mix(in srgb, var(--ink-950) 88%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid
+    color-mix(in srgb, var(--border-subtle) 60%, transparent);
+}
+
+.apDots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.apDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-700);
+  border: 1px solid var(--border);
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.apDotFull {
+  background: var(--cyan-500);
+  border-color: var(--cyan-400);
+  box-shadow: 0 0 6px rgba(0, 243, 255, 0.5);
+}
+
+.apBonus {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyan-400);
+  margin-left: 2px;
+}
+
+.endDayBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 0 var(--space-3);
+  height: 26px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.endDayBtn:not(:disabled):hover {
+  border-color: var(--cyan-700);
+  color: var(--cyan-400);
+}
+
+.endDayBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .bar {
   display: flex;
   align-items: center;

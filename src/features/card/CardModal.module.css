@@ -1,0 +1,200 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.phaseLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text-faint);
+  margin: 0;
+}
+
+.cardWrap {
+  perspective: 900px;
+}
+
+.card {
+  width: 220px;
+  height: 310px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.cardBack,
+.cardFront {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5) var(--space-4);
+}
+
+.cardBack {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 22px,
+      rgba(255, 255, 255, 0.025) 22px,
+      rgba(255, 255, 255, 0.025) 23px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 22px,
+      rgba(255, 255, 255, 0.025) 22px,
+      rgba(255, 255, 255, 0.025) 23px
+    ),
+    var(--ink-900);
+  border: 2px solid var(--border);
+}
+
+.backMark {
+  font-family: var(--font-mono);
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--border);
+}
+
+.cardFront {
+  transform: rotateY(180deg);
+  background: var(--ink-900);
+  border: 2px solid var(--border);
+  gap: var(--space-3);
+}
+
+.cardFront.positive {
+  border-color: var(--cyan-700);
+  box-shadow: 0 0 32px rgba(0, 243, 255, 0.12);
+}
+
+.cardFront.negative {
+  border-color: var(--crimson-700);
+  box-shadow: 0 0 32px rgba(255, 42, 95, 0.12);
+}
+
+.cardSymbol {
+  font-family: var(--font-mono);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cardSymbol.positive {
+  color: var(--cyan-400);
+  text-shadow: var(--glow-accent-sm);
+}
+
+.cardSymbol.negative {
+  color: var(--crimson-400);
+}
+
+.cardTitle {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.cardDesc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.cardEffect {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  width: 100%;
+}
+
+.cardEffect.positive {
+  color: var(--cyan-300);
+  background: color-mix(in srgb, var(--cyan-950) 80%, transparent);
+  border: 1px solid var(--cyan-800);
+}
+
+.cardEffect.negative {
+  color: var(--crimson-300);
+  background: color-mix(in srgb, var(--crimson-950) 80%, transparent);
+  border: 1px solid var(--crimson-800);
+}
+
+.btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 0 var(--space-6);
+  height: 44px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+  min-width: 160px;
+}
+
+.btn:hover {
+  border-color: var(--cyan-700);
+  color: var(--cyan-300);
+  box-shadow: var(--glow-accent-sm);
+}
+
+.btnContinue {
+  border-color: var(--cyan-700);
+  color: var(--cyan-300);
+  animation: fadeIn 0.25s ease;
+}
+
+.btnPlaceholder {
+  height: 44px;
+  min-width: 160px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

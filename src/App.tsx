@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import styles from './App.module.css';
 import { deleteSave, loadSave } from './api/storage';
 import { Layout } from './components/layout/Layout';
+import { CardModal } from './features/card/CardModal';
+import { formatMoney } from './features/game/propertyUtils';
 import { useGameState } from './features/game/useGameState';
 import { HUD } from './features/hud/HUD';
 import { InventoryModal } from './features/inventory/InventoryModal';
@@ -56,7 +59,11 @@ export function App() {
         <GameMap
           onBlockClick={selectBlock}
           ownedProperties={ownedProperties}
-          selectedFeatureId={selectedProperty?.featureId ?? null}
+          selectedFeatureIds={
+            selectedProperty
+              ? (selectedProperty.featureIds ?? [selectedProperty.featureId])
+              : []
+          }
         />
       </Layout>
       <HUD
@@ -64,17 +71,47 @@ export function App() {
         netWorth={netWorth}
         day={state.day}
         rentAmount={state.lastRentAmount}
+        actionsLeft={state.actionsLeft}
+        phase={state.phase}
+        onEndDay={() => dispatch({ type: 'END_DAY' })}
       />
       <PropertyDrawer
         property={selectedProperty}
         cash={state.cash}
+        actionsLeft={state.actionsLeft}
+        phase={state.phase}
+        pendingDiscount={state.pendingDiscount}
         dispatch={dispatch}
       />
+      {state.phase === 'card' && (
+        <CardModal
+          activeCard={state.activeCard}
+          day={state.day}
+          dispatch={dispatch}
+        />
+      )}
       {modal === 'inventory' && (
         <InventoryModal
           properties={ownedProperties}
           onClose={() => setModal(null)}
         />
+      )}
+      {state.won && (
+        <div className={styles.victory}>
+          <div className={styles.victoryBox}>
+            <div className={styles.victoryTitle}>SYNDIKAT VUNNET</div>
+            <p className={styles.victorySub}>
+              DAG {state.day} · {formatMoney(netWorth)} NETTOVERDI
+            </p>
+            <button
+              type="button"
+              className={styles.victoryBtn}
+              onClick={handleNewGame}
+            >
+              NY RUNDE
+            </button>
+          </div>
+        </div>
       )}
     </>
   );

@@ -1,8 +1,14 @@
 export type PropertyTier = 'vacant' | 'shop' | 'restaurant';
 
+export interface PricePoint {
+  day: number;
+  price: number;
+}
+
 export interface Property {
   id: string;
   featureId: number | string;
+  featureIds?: (number | string)[];
   name: string;
   category?: string;
   address?: string;
@@ -15,6 +21,32 @@ export interface Property {
   purchasePrice: number | null;
   tier: PropertyTier;
   rentPerDay: number;
+  priceHistory?: PricePoint[];
+}
+
+export type CardEffect =
+  | { type: 'market_boost'; pct: number; days: number }
+  | { type: 'market_crash'; pct: number; days: number }
+  | { type: 'tax'; pct: number }
+  | { type: 'discount'; pct: number }
+  | { type: 'ap_bonus'; ap: number }
+  | { type: 'fire' }
+  | { type: 'cash'; amount: number }
+  | { type: 'rent_boost'; pct: number; days: number };
+
+export interface Card {
+  id: string;
+  title: string;
+  description: string;
+  polarity: 'positive' | 'negative';
+  effect: CardEffect;
+}
+
+export interface ActiveEffect {
+  id: string;
+  type: 'market_boost' | 'market_crash' | 'rent_boost';
+  pct: number;
+  daysLeft: number;
 }
 
 export interface GameState {
@@ -24,6 +56,14 @@ export interface GameState {
   properties: Record<string, Property>;
   selectedPropertyId: string | null;
   lastRentAmount: number;
+  phase: 'action' | 'card';
+  actionsLeft: number;
+  deck: Card[];
+  discard: Card[];
+  activeCard: Card | null;
+  activeEffects: ActiveEffect[];
+  pendingDiscount: number;
+  won: boolean;
 }
 
 export type GameAction =
@@ -39,5 +79,8 @@ export type GameAction =
       category?: string;
       address?: string;
     }
+  | { type: 'END_DAY' }
+  | { type: 'DRAW_CARD' }
+  | { type: 'DISMISS_CARD' }
   | { type: 'RESET'; state?: GameState }
   | { type: 'TICK' };

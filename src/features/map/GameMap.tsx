@@ -11,9 +11,10 @@ interface GameMapProps {
     lng: number,
     height?: number,
     area?: number,
+    featureIds?: (number | string)[],
   ) => void;
   ownedProperties: Property[];
-  selectedFeatureId: number | string | null;
+  selectedFeatureIds: (number | string)[];
 }
 
 type FeatureId = number | string;
@@ -47,45 +48,108 @@ function calcFootprintM2(
   return undefined;
 }
 
+// ~1 meter precision for coordinate matching
+const COORD_PREC = 5;
+
+function extractCoords(
+  geometry: mapboxgl.MapboxGeoJSONFeature['geometry'],
+): Set<string> {
+  const coords = new Set<string>();
+  const addRing = (ring: number[][]) => {
+    for (const [x, y] of ring) {
+      coords.add(`${x.toFixed(COORD_PREC)},${y.toFixed(COORD_PREC)}`);
+    }
+  };
+  if (geometry.type === 'Polygon') {
+    for (const ring of geometry.coordinates) addRing(ring);
+  } else if (geometry.type === 'MultiPolygon') {
+    for (const poly of geometry.coordinates) {
+      for (const ring of poly) addRing(ring);
+    }
+  }
+  return coords;
+}
+
+function findAdjacentGroup(
+  primary: mapboxgl.MapboxGeoJSONFeature,
+  candidates: mapboxgl.MapboxGeoJSONFeature[],
+): mapboxgl.MapboxGeoJSONFeature[] {
+  const groupCoords = extractCoords(primary.geometry);
+  const result = [primary];
+  // Deduplicate candidates and exclude primary
+  const seen = new Set<FeatureId>([primary.id as FeatureId]);
+  const pool = candidates.filter(
+    f => f.id !== undefined && !seen.has(f.id as FeatureId) && seen.add(f.id as FeatureId),
+  );
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let i = pool.length - 1; i >= 0; i--) {
+      const f = pool[i];
+      const fCoords = extractCoords(f.geometry);
+      let touches = false;
+      for (const c of fCoords) {
+        if (groupCoords.has(c)) {
+          touches = true;
+          break;
+        }
+      }
+      if (touches) {
+        result.push(f);
+        for (const c of fCoords) groupCoords.add(c);
+        pool.splice(i, 1);
+        changed = true;
+      }
+    }
+  }
+  return result;
+}
+
 function applyHighlights(
   map: mapboxgl.Map,
   properties: Property[],
-  highlighted: Map<string, FeatureId>,
+  highlighted: Map<string, FeatureId[]>,
 ) {
   if (!map.isStyleLoaded()) return;
   const currentIds = new Set(properties.map(p => p.id));
 
-  for (const [propId, featureId] of highlighted) {
+  for (const [propId, featureIds] of highlighted) {
     if (!currentIds.has(propId)) {
-      map.setFeatureState(
-        { source: 'composite', sourceLayer: 'building', id: featureId },
-        { owned: false },
-      );
+      for (const fid of featureIds) {
+        map.setFeatureState(
+          { source: 'composite', sourceLayer: 'building', id: fid },
+          { owned: false },
+        );
+      }
       highlighted.delete(propId);
     }
   }
 
   for (const prop of properties) {
     if (highlighted.has(prop.id)) continue;
-    map.setFeatureState(
-      { source: 'composite', sourceLayer: 'building', id: prop.featureId },
-      { owned: true },
-    );
-    highlighted.set(prop.id, prop.featureId);
+    const ids = prop.featureIds ?? [prop.featureId];
+    for (const fid of ids) {
+      map.setFeatureState(
+        { source: 'composite', sourceLayer: 'building', id: fid },
+        { owned: true },
+      );
+    }
+    highlighted.set(prop.id, ids);
   }
 }
 
 export function GameMap({
   onBlockClick,
   ownedProperties,
-  selectedFeatureId,
+  selectedFeatureIds,
 }: GameMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const onClickRef = useRef(onBlockClick);
   const ownedRef = useRef(ownedProperties);
-  const highlightedRef = useRef<Map<string, FeatureId>>(new Map());
-  const prevSelectedRef = useRef<FeatureId | null>(null);
+  const highlightedRef = useRef<Map<string, FeatureId[]>>(new Map());
+  const prevSelectedRef = useRef<FeatureId[]>([]);
 
   useEffect(() => {
     onClickRef.current = onBlockClick;
@@ -158,16 +222,37 @@ export function GameMap({
     });
 
     map.on('click', e => {
-      const features = map.queryRenderedFeatures(e.point, {
+      const primary = map.queryRenderedFeatures(e.point, {
         layers: ['buildings-3d'],
-      });
-      if (features.length === 0 || features[0].id === undefined) return;
+      })[0];
+      if (!primary || primary.id === undefined) return;
 
-      const featureId = features[0].id as FeatureId;
+      const RADIUS = 50;
+      const candidates = map.queryRenderedFeatures(
+        [
+          [e.point.x - RADIUS, e.point.y - RADIUS],
+          [e.point.x + RADIUS, e.point.y + RADIUS],
+        ],
+        { layers: ['buildings-3d'] },
+      );
+
+      const group = findAdjacentGroup(primary, candidates);
+      const featureIds = group.map(f => f.id as FeatureId);
+
       const { lat, lng } = e.lngLat;
-      const height = features[0].properties?.height as number | undefined;
-      const area = calcFootprintM2(features[0].geometry);
-      onClickRef.current(featureId, lat, lng, height, area);
+      const height = primary.properties?.height as number | undefined;
+      const totalArea = group.reduce((sum, f) => {
+        return sum + (calcFootprintM2(f.geometry) ?? 0);
+      }, 0);
+
+      onClickRef.current(
+        primary.id as FeatureId,
+        lat,
+        lng,
+        height,
+        totalArea > 0 ? totalArea : undefined,
+        featureIds.length > 1 ? featureIds : undefined,
+      );
     });
 
     mapRef.current = map;
@@ -187,21 +272,21 @@ export function GameMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map?.isStyleLoaded()) return;
-    const prev = prevSelectedRef.current;
-    if (prev !== null && prev !== selectedFeatureId) {
+
+    for (const id of prevSelectedRef.current) {
       map.setFeatureState(
-        { source: 'composite', sourceLayer: 'building', id: prev },
+        { source: 'composite', sourceLayer: 'building', id },
         { selected: false },
       );
     }
-    if (selectedFeatureId !== null) {
+    for (const id of selectedFeatureIds) {
       map.setFeatureState(
-        { source: 'composite', sourceLayer: 'building', id: selectedFeatureId },
+        { source: 'composite', sourceLayer: 'building', id },
         { selected: true },
       );
     }
-    prevSelectedRef.current = selectedFeatureId;
-  }, [selectedFeatureId]);
+    prevSelectedRef.current = selectedFeatureIds;
+  }, [selectedFeatureIds]);
 
   return <div ref={containerRef} className={styles.container} />;
 }
