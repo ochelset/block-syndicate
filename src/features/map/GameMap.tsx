@@ -5,11 +5,47 @@ import type { Property } from '../game/gameTypes';
 import styles from './GameMap.module.css';
 
 interface GameMapProps {
-  onBlockClick: (featureId: number | string, lat: number, lng: number) => void;
+  onBlockClick: (
+    featureId: number | string,
+    lat: number,
+    lng: number,
+    height?: number,
+    area?: number,
+  ) => void;
   ownedProperties: Property[];
+  selectedFeatureId: number | string | null;
 }
 
 type FeatureId = number | string;
+
+function ringAreaM2(ring: number[][]): number {
+  if (ring.length < 3) return 0;
+  const cosLat = Math.cos((ring[0][1] * Math.PI) / 180);
+  const latM = 110540;
+  const lngM = 111320 * cosLat;
+  let area = 0;
+  for (let i = 0; i < ring.length - 1; i++) {
+    area +=
+      ring[i][0] * lngM * ring[i + 1][1] * latM -
+      ring[i + 1][0] * lngM * ring[i][1] * latM;
+  }
+  return Math.abs(area / 2);
+}
+
+function calcFootprintM2(
+  geometry: mapboxgl.MapboxGeoJSONFeature['geometry'],
+): number | undefined {
+  if (geometry.type === 'Polygon') {
+    return ringAreaM2(geometry.coordinates[0]);
+  }
+  if (geometry.type === 'MultiPolygon') {
+    return geometry.coordinates.reduce(
+      (sum, poly) => sum + ringAreaM2(poly[0]),
+      0,
+    );
+  }
+  return undefined;
+}
 
 function applyHighlights(
   map: mapboxgl.Map,
@@ -39,12 +75,17 @@ function applyHighlights(
   }
 }
 
-export function GameMap({ onBlockClick, ownedProperties }: GameMapProps) {
+export function GameMap({
+  onBlockClick,
+  ownedProperties,
+  selectedFeatureId,
+}: GameMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const onClickRef = useRef(onBlockClick);
   const ownedRef = useRef(ownedProperties);
   const highlightedRef = useRef<Map<string, FeatureId>>(new Map());
+  const prevSelectedRef = useRef<FeatureId | null>(null);
 
   useEffect(() => {
     onClickRef.current = onBlockClick;
@@ -80,6 +121,8 @@ export function GameMap({ onBlockClick, ownedProperties }: GameMapProps) {
         paint: {
           'fill-extrusion-color': [
             'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            '#00f3ff',
             ['boolean', ['feature-state', 'owned'], false],
             '#ff2a5f',
             '#1a2c40',
@@ -122,7 +165,9 @@ export function GameMap({ onBlockClick, ownedProperties }: GameMapProps) {
 
       const featureId = features[0].id as FeatureId;
       const { lat, lng } = e.lngLat;
-      onClickRef.current(featureId, lat, lng);
+      const height = features[0].properties?.height as number | undefined;
+      const area = calcFootprintM2(features[0].geometry);
+      onClickRef.current(featureId, lat, lng, height, area);
     });
 
     mapRef.current = map;
@@ -138,6 +183,25 @@ export function GameMap({ onBlockClick, ownedProperties }: GameMapProps) {
     const map = mapRef.current;
     if (map) applyHighlights(map, ownedProperties, highlightedRef.current);
   }, [ownedProperties]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map?.isStyleLoaded()) return;
+    const prev = prevSelectedRef.current;
+    if (prev !== null && prev !== selectedFeatureId) {
+      map.setFeatureState(
+        { source: 'composite', sourceLayer: 'building', id: prev },
+        { selected: false },
+      );
+    }
+    if (selectedFeatureId !== null) {
+      map.setFeatureState(
+        { source: 'composite', sourceLayer: 'building', id: selectedFeatureId },
+        { selected: true },
+      );
+    }
+    prevSelectedRef.current = selectedFeatureId;
+  }, [selectedFeatureId]);
 
   return <div ref={containerRef} className={styles.container} />;
 }

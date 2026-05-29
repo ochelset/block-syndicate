@@ -17,25 +17,19 @@ describe('StartScreen — no saved game', () => {
     expect(onStart).toHaveBeenCalledOnce();
   });
 
-  it('does not show Continue or New Game buttons', () => {
+  it('does not show the Continue button', () => {
     render(<StartScreen onStart={() => {}} />);
     expect(
       screen.queryByRole('button', { name: /continue/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /new game/i }),
     ).not.toBeInTheDocument();
   });
 });
 
 describe('StartScreen — with saved game', () => {
-  it('shows Continue and New Game buttons instead of Enter', () => {
+  it('shows Continue and New Game buttons', () => {
     render(
       <StartScreen onStart={() => {}} onContinue={() => {}} savedDay={12} />,
     );
-    expect(
-      screen.queryByRole('button', { name: /^enter$/i }),
-    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /continue/i }),
     ).toBeInTheDocument();

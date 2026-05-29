@@ -44,15 +44,7 @@ export function PropertyDrawer({
 
   return (
     <div className={`${styles.overlay} ${isOpen ? styles.open : ''}`}>
-      <button
-        type="button"
-        className={styles.backdrop}
-        aria-label="Close property panel"
-        onClick={handleClose}
-      />
       <div className={`${styles.drawer} ${isOwned ? styles.owned : ''}`}>
-        <div className={styles.handle} />
-
         {property && (
           <>
             <div className={styles.header}>
@@ -61,6 +53,20 @@ export function PropertyDrawer({
                 <div className={`${styles.tierBadge} ${styles[property.tier]}`}>
                   {tierLabel(property.tier)}
                 </div>
+                {(property.category || property.address) && (
+                  <div className={styles.poiMeta}>
+                    {property.category && (
+                      <span className={styles.poiCategory}>
+                        {property.category}
+                      </span>
+                    )}
+                    {property.address && (
+                      <span className={styles.poiAddress}>
+                        {property.address}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <button
                 type="button"
@@ -96,6 +102,27 @@ export function PropertyDrawer({
                 )}
               </div>
             </div>
+
+            {(property.height !== undefined || property.area !== undefined) && (
+              <div className={styles.statsRow}>
+                {property.height !== undefined && (
+                  <div className={styles.statBlock}>
+                    <span className={styles.statLabel}>HEIGHT</span>
+                    <span className={styles.statValueSm}>
+                      {property.height} m
+                    </span>
+                  </div>
+                )}
+                {property.area !== undefined && (
+                  <div className={styles.statBlock}>
+                    <span className={styles.statLabel}>FOOTPRINT</span>
+                    <span className={styles.statValueSm}>
+                      {property.area.toLocaleString('no')} m²
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {upgradeCost !== null && next !== null && (
               <div className={styles.upgradeHint}>

@@ -6,6 +6,7 @@ import { InventoryModal } from './InventoryModal';
 function makeProperty(overrides: Partial<Property> = {}): Property {
   return {
     id: 'p1',
+    featureId: 1,
     name: 'Stortingsgata 6',
     lat: 59.9139,
     lng: 10.7522,

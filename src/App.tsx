@@ -53,7 +53,11 @@ export function App() {
         activeModal={modal}
         onCloseModal={() => setModal(null)}
       >
-        <GameMap onBlockClick={selectBlock} ownedProperties={ownedProperties} />
+        <GameMap
+          onBlockClick={selectBlock}
+          ownedProperties={ownedProperties}
+          selectedFeatureId={selectedProperty?.featureId ?? null}
+        />
       </Layout>
       <HUD
         cash={state.cash}

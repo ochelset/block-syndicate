@@ -15,6 +15,7 @@ export function StartScreen({
   return (
     <div className={styles.screen}>
       <BlockSyndicateLogo className={styles.logo} width={460} height={110} />
+      <p className={styles.tagline}>Claim your territory</p>
       {onContinue ? (
         <div className={styles.actions}>
           <button

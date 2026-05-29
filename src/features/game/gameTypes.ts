@@ -4,6 +4,10 @@ export interface Property {
   id: string;
   featureId: number | string;
   name: string;
+  category?: string;
+  address?: string;
+  height?: number;
+  area?: number;
   lat: number;
   lng: number;
   basePrice: number;
@@ -28,6 +32,12 @@ export type GameAction =
   | { type: 'BUY_PROPERTY'; propertyId: string }
   | { type: 'SELL_PROPERTY'; propertyId: string }
   | { type: 'UPGRADE_PROPERTY'; propertyId: string }
-  | { type: 'SET_PROPERTY_NAME'; propertyId: string; name: string }
+  | {
+      type: 'SET_PROPERTY_NAME';
+      propertyId: string;
+      name: string;
+      category?: string;
+      address?: string;
+    }
   | { type: 'RESET'; state?: GameState }
   | { type: 'TICK' };

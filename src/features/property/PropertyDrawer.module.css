@@ -1,62 +1,40 @@
 .overlay {
   position: fixed;
-  inset: 0;
+  bottom: calc(59px + var(--space-4));
+  right: calc(59px + var(--space-4));
   z-index: 50;
+  width: 280px;
+  max-height: calc(100dvh - 163px);
   pointer-events: none;
 }
 
-.backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0);
-  transition: background 0.3s ease;
-  border: none;
-  cursor: default;
-  padding: 0;
-}
-
-.overlay.open .backdrop {
-  background: rgba(0, 0, 0, 0.45);
-  pointer-events: auto;
-}
-
 .drawer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  width: 100%;
+  max-height: inherit;
+  overflow-y: auto;
   background: color-mix(in srgb, var(--ink-950) 92%, transparent);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid var(--cyan-800);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  padding: var(--space-3) var(--space-4) var(--space-6);
-  padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
-  transform: translateY(100%);
-  transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1);
-  pointer-events: auto;
+  border: 1px solid var(--cyan-800);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  transform: translateX(calc(100% + var(--space-4)));
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
   box-shadow:
-    0 -4px 24px rgba(0, 243, 255, 0.08),
-    0 -1px 0 var(--cyan-900);
+    -4px 0 24px rgba(0, 243, 255, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .drawer.owned {
-  border-top-color: var(--crimson-700);
+  border-color: var(--crimson-700);
   box-shadow:
-    0 -4px 24px rgba(255, 42, 95, 0.1),
-    0 -1px 0 var(--crimson-900);
+    -4px 0 24px rgba(255, 42, 95, 0.1),
+    0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .overlay.open .drawer {
-  transform: translateY(0);
-}
-
-.handle {
-  width: 36px;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  margin: 0 auto var(--space-4);
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 .header {
@@ -102,6 +80,28 @@
   color: var(--crimson-300);
   border-color: var(--crimson-700);
   background: var(--crimson-950);
+}
+
+.poiMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-1);
+}
+
+.poiCategory {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--cyan-500);
+  text-transform: uppercase;
+}
+
+.poiAddress {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
 }
 
 .closeBtn {
@@ -160,6 +160,14 @@
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.statValueSm {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
 }
 
 .rentActive {

@@ -90,6 +90,8 @@ export function buildProperty(
   featureId: number | string,
   rawLat: number,
   rawLng: number,
+  height?: number,
+  area?: number,
 ): Property {
   const basePrice = deriveBasePrice(rawLat, rawLng);
   return {
@@ -103,6 +105,8 @@ export function buildProperty(
     purchasePrice: null,
     tier: 'vacant',
     rentPerDay: 0,
+    ...(height !== undefined && { height: Math.round(height) }),
+    ...(area !== undefined && { area: Math.round(area) }),
   };
 }
 

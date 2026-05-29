@@ -94,7 +94,12 @@ export function reducer(state: GameState, action: GameAction): GameState {
         ...state,
         properties: {
           ...state.properties,
-          [action.propertyId]: { ...prop, name: action.name },
+          [action.propertyId]: {
+            ...prop,
+            name: action.name,
+            ...(action.category !== undefined && { category: action.category }),
+            ...(action.address !== undefined && { address: action.address }),
+          },
         },
       };
     }
@@ -157,17 +162,29 @@ export function useGameState(active = false) {
   }, [state, active]);
 
   const selectBlock = useCallback(
-    (featureId: number | string, rawLat: number, rawLng: number) => {
+    (
+      featureId: number | string,
+      rawLat: number,
+      rawLng: number,
+      height?: number,
+      area?: number,
+    ) => {
       const id = String(featureId);
-      const property = buildProperty(featureId, rawLat, rawLng);
+      const property = buildProperty(featureId, rawLat, rawLng, height, area);
       dispatch({ type: 'SELECT_PROPERTY', property });
 
       if (!geocodedIds.current.has(id)) {
         geocodedIds.current.add(id);
         const token = import.meta.env.VITE_MAPBOX_TOKEN as string;
-        reverseGeocode(property.lat, property.lng, token).then(name => {
-          if (name)
-            dispatch({ type: 'SET_PROPERTY_NAME', propertyId: id, name });
+        reverseGeocode(property.lat, property.lng, token).then(info => {
+          if (info)
+            dispatch({
+              type: 'SET_PROPERTY_NAME',
+              propertyId: id,
+              name: info.name,
+              category: info.category,
+              address: info.address,
+            });
         });
       }
     },
