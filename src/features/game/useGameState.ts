@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { reverseGeocode } from '../../api/geocode';
+import { writeSave } from '../../api/storage';
 import type { GameAction, GameState, Property } from './gameTypes';
 import {
   buildProperty,
@@ -14,7 +15,7 @@ import {
 export const TICK_MS = 3000;
 const INITIAL_CASH = 100_000_000;
 
-const initialState: GameState = {
+const defaultState: GameState = {
   cash: INITIAL_CASH,
   day: 1,
   totalRentCollected: 0,
@@ -99,6 +100,11 @@ export function reducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    case 'RESET':
+      return action.state
+        ? { ...action.state, selectedPropertyId: null }
+        : { ...defaultState };
+
     case 'TICK': {
       let totalRent = 0;
       const updatedProps: Record<string, Property> = {};
@@ -136,13 +142,18 @@ export function reducer(state: GameState, action: GameAction): GameState {
 }
 
 export function useGameState() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, defaultState);
   const geocodedIds = useRef(new Set<string>());
 
   useEffect(() => {
     const id = setInterval(() => dispatch({ type: 'TICK' }), TICK_MS);
     return () => clearInterval(id);
   }, []);
+
+  // Auto-save on every state change; selectedPropertyId is ephemeral
+  useEffect(() => {
+    writeSave(state);
+  }, [state]);
 
   const selectBlock = useCallback((rawLat: number, rawLng: number) => {
     const id = coordsToId(rawLat, rawLng);

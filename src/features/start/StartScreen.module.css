@@ -62,3 +62,53 @@
   box-shadow: var(--glow-primary);
   color: var(--crimson-300);
 }
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.continueButton {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  background: transparent;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-12);
+  cursor: pointer;
+  box-shadow: var(--glow-accent-sm);
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    color 0.2s;
+}
+
+.continueButton:hover {
+  background: var(--accent-subtle);
+  box-shadow: var(--glow-accent);
+  color: var(--cyan-200);
+}
+
+.newGameButton {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: transparent;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.newGameButton:hover {
+  color: var(--text-muted);
+}

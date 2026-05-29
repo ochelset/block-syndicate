@@ -235,3 +235,25 @@ describe('DESELECT_PROPERTY', () => {
     expect(next.selectedPropertyId).toBeNull();
   });
 });
+
+describe('RESET', () => {
+  it('resets to default state when no state is provided', () => {
+    const state = makeState({ cash: 0, day: 99 });
+    const next = reducer(state, { type: 'RESET' });
+    expect(next.cash).toBe(100_000_000);
+    expect(next.day).toBe(1);
+    expect(next.properties).toEqual({});
+  });
+
+  it('restores provided state and clears selectedPropertyId', () => {
+    const saved = makeState({
+      cash: 5_000_000,
+      day: 14,
+      selectedPropertyId: 'old',
+    });
+    const next = reducer(makeState(), { type: 'RESET', state: saved });
+    expect(next.cash).toBe(5_000_000);
+    expect(next.day).toBe(14);
+    expect(next.selectedPropertyId).toBeNull();
+  });
+});

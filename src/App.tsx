@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { deleteSave, loadSave } from './api/storage';
 import { Layout } from './components/layout/Layout';
 import { useGameState } from './features/game/useGameState';
 import { HUD } from './features/hud/HUD';
@@ -11,6 +12,7 @@ import type { Modal, Screen } from './types';
 export function App() {
   const [screen, setScreen] = useState<Screen>('start');
   const [modal, setModal] = useState<Modal>(null);
+  const [savedGame] = useState(() => loadSave());
   const { state, dispatch, selectBlock, netWorth } = useGameState();
 
   const ownedProperties = Object.values(state.properties).filter(
@@ -21,8 +23,25 @@ export function App() {
     ? (state.properties[state.selectedPropertyId] ?? null)
     : null;
 
+  function handleNewGame() {
+    deleteSave();
+    dispatch({ type: 'RESET' });
+    setScreen('game');
+  }
+
+  function handleContinue() {
+    if (savedGame) dispatch({ type: 'RESET', state: savedGame });
+    setScreen('game');
+  }
+
   if (screen === 'start') {
-    return <StartScreen onStart={() => setScreen('game')} />;
+    return (
+      <StartScreen
+        onStart={handleNewGame}
+        onContinue={savedGame ? handleContinue : undefined}
+        savedDay={savedGame?.day}
+      />
+    );
   }
 
   return (
