@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useReducer } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { reverseGeocode } from '../../api/geocode';
 import type { GameAction, GameState, Property } from './gameTypes';
 import {
   buildProperty,
@@ -22,7 +23,7 @@ const initialState: GameState = {
   lastRentAmount: 0,
 };
 
-function reducer(state: GameState, action: GameAction): GameState {
+export function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'SELECT_PROPERTY': {
       const existing = state.properties[action.property.id] ?? action.property;
@@ -86,6 +87,18 @@ function reducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    case 'SET_PROPERTY_NAME': {
+      const prop = state.properties[action.propertyId];
+      if (!prop) return state;
+      return {
+        ...state,
+        properties: {
+          ...state.properties,
+          [action.propertyId]: { ...prop, name: action.name },
+        },
+      };
+    }
+
     case 'TICK': {
       let totalRent = 0;
       const updatedProps: Record<string, Property> = {};
@@ -124,6 +137,7 @@ function reducer(state: GameState, action: GameAction): GameState {
 
 export function useGameState() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const geocodedIds = useRef(new Set<string>());
 
   useEffect(() => {
     const id = setInterval(() => dispatch({ type: 'TICK' }), TICK_MS);
@@ -134,6 +148,14 @@ export function useGameState() {
     const id = coordsToId(rawLat, rawLng);
     const property = buildProperty(id, rawLat, rawLng);
     dispatch({ type: 'SELECT_PROPERTY', property });
+
+    if (!geocodedIds.current.has(id)) {
+      geocodedIds.current.add(id);
+      const token = import.meta.env.VITE_MAPBOX_TOKEN as string;
+      reverseGeocode(property.lat, property.lng, token).then(name => {
+        if (name) dispatch({ type: 'SET_PROPERTY_NAME', propertyId: id, name });
+      });
+    }
   }, []);
 
   const netWorth =

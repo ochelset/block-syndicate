@@ -27,4 +27,5 @@ export type GameAction =
   | { type: 'BUY_PROPERTY'; propertyId: string }
   | { type: 'SELL_PROPERTY'; propertyId: string }
   | { type: 'UPGRADE_PROPERTY'; propertyId: string }
+  | { type: 'SET_PROPERTY_NAME'; propertyId: string; name: string }
   | { type: 'TICK' };
