@@ -15,7 +15,6 @@ export function StartScreen({
   return (
     <div className={styles.screen}>
       <BlockSyndicateLogo className={styles.logo} width={460} height={110} />
-      <p className={styles.tagline}>Claim your territory</p>
       {onContinue ? (
         <div className={styles.actions}>
           <button
@@ -27,7 +26,7 @@ export function StartScreen({
           </button>
           <button
             type="button"
-            className={styles.newGameButton}
+            className={styles.startButton}
             onClick={onStart}
           >
             New Game
@@ -35,7 +34,7 @@ export function StartScreen({
         </div>
       ) : (
         <button type="button" className={styles.startButton} onClick={onStart}>
-          Enter
+          New Game
         </button>
       )}
     </div>

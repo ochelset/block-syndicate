@@ -2,6 +2,7 @@ export type PropertyTier = 'vacant' | 'shop' | 'restaurant';
 
 export interface Property {
   id: string;
+  featureId: number | string;
   name: string;
   lat: number;
   lng: number;

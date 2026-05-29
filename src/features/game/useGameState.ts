@@ -6,7 +6,6 @@ import {
   buildProperty,
   calcRentPerDay,
   calcUpgradeCost,
-  coordsToId,
   hashId,
   nextTier,
   tickMarketPrice,
@@ -141,33 +140,39 @@ export function reducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-export function useGameState() {
+export function useGameState(active = false) {
   const [state, dispatch] = useReducer(reducer, defaultState);
   const geocodedIds = useRef(new Set<string>());
 
   useEffect(() => {
+    if (!active) return;
     const id = setInterval(() => dispatch({ type: 'TICK' }), TICK_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [active]);
 
   // Auto-save on every state change; selectedPropertyId is ephemeral
   useEffect(() => {
+    if (!active) return;
     writeSave(state);
-  }, [state]);
+  }, [state, active]);
 
-  const selectBlock = useCallback((rawLat: number, rawLng: number) => {
-    const id = coordsToId(rawLat, rawLng);
-    const property = buildProperty(id, rawLat, rawLng);
-    dispatch({ type: 'SELECT_PROPERTY', property });
+  const selectBlock = useCallback(
+    (featureId: number | string, rawLat: number, rawLng: number) => {
+      const id = String(featureId);
+      const property = buildProperty(featureId, rawLat, rawLng);
+      dispatch({ type: 'SELECT_PROPERTY', property });
 
-    if (!geocodedIds.current.has(id)) {
-      geocodedIds.current.add(id);
-      const token = import.meta.env.VITE_MAPBOX_TOKEN as string;
-      reverseGeocode(property.lat, property.lng, token).then(name => {
-        if (name) dispatch({ type: 'SET_PROPERTY_NAME', propertyId: id, name });
-      });
-    }
-  }, []);
+      if (!geocodedIds.current.has(id)) {
+        geocodedIds.current.add(id);
+        const token = import.meta.env.VITE_MAPBOX_TOKEN as string;
+        reverseGeocode(property.lat, property.lng, token).then(name => {
+          if (name)
+            dispatch({ type: 'SET_PROPERTY_NAME', propertyId: id, name });
+        });
+      }
+    },
+    [],
+  );
 
   const netWorth =
     state.cash +

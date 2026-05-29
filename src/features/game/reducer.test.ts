@@ -5,6 +5,7 @@ import { reducer } from './useGameState';
 function makeProperty(overrides: Partial<Property> = {}): Property {
   return {
     id: 'test-id',
+    featureId: 1234,
     name: 'Test Block',
     lat: 59.9139,
     lng: 10.7522,

@@ -1,6 +1,6 @@
 import type { GameState } from '../features/game/gameTypes';
 
-const KEY = 'block-syndicate-v1';
+const KEY = 'block-syndicate-v2';
 
 export function loadSave(): GameState | null {
   try {

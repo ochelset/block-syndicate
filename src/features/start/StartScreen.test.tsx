@@ -3,15 +3,17 @@ import userEvent from '@testing-library/user-event';
 import { StartScreen } from './StartScreen';
 
 describe('StartScreen — no saved game', () => {
-  it('renders the Enter button', () => {
+  it('renders the New Game button', () => {
     render(<StartScreen onStart={() => {}} />);
-    expect(screen.getByRole('button', { name: /enter/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /new game/i }),
+    ).toBeInTheDocument();
   });
 
-  it('calls onStart when Enter is clicked', async () => {
+  it('calls onStart when New Game is clicked', async () => {
     const onStart = vi.fn();
     render(<StartScreen onStart={onStart} />);
-    await userEvent.click(screen.getByRole('button', { name: /enter/i }));
+    await userEvent.click(screen.getByRole('button', { name: /new game/i }));
     expect(onStart).toHaveBeenCalledOnce();
   });
 

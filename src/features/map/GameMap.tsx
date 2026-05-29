@@ -5,7 +5,7 @@ import type { Property } from '../game/gameTypes';
 import styles from './GameMap.module.css';
 
 interface GameMapProps {
-  onBlockClick: (lat: number, lng: number) => void;
+  onBlockClick: (featureId: number | string, lat: number, lng: number) => void;
   ownedProperties: Property[];
 }
 
@@ -31,18 +31,11 @@ function applyHighlights(
 
   for (const prop of properties) {
     if (highlighted.has(prop.id)) continue;
-    const point = map.project([prop.lng, prop.lat]);
-    const features = map.queryRenderedFeatures(point, {
-      layers: ['buildings-3d'],
-    });
-    if (features.length > 0 && features[0].id !== undefined) {
-      const featureId = features[0].id as FeatureId;
-      map.setFeatureState(
-        { source: 'composite', sourceLayer: 'building', id: featureId },
-        { owned: true },
-      );
-      highlighted.set(prop.id, featureId);
-    }
+    map.setFeatureState(
+      { source: 'composite', sourceLayer: 'building', id: prop.featureId },
+      { owned: true },
+    );
+    highlighted.set(prop.id, prop.featureId);
   }
 }
 
@@ -122,24 +115,14 @@ export function GameMap({ onBlockClick, ownedProperties }: GameMapProps) {
     });
 
     map.on('click', e => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['buildings-3d'],
+      });
+      if (features.length === 0 || features[0].id === undefined) return;
+
+      const featureId = features[0].id as FeatureId;
       const { lat, lng } = e.lngLat;
-
-      // In pitched 3D view, clicks on building faces drift from ground coords.
-      // Snap to the nearest owned property if within ~80m to ensure the right
-      // property is selected regardless of where on the extruded building was clicked.
-      let targetLat = lat;
-      let targetLng = lng;
-      let minDist = 0.0007;
-      for (const prop of ownedRef.current) {
-        const d = Math.hypot(prop.lat - lat, prop.lng - lng);
-        if (d < minDist) {
-          minDist = d;
-          targetLat = prop.lat;
-          targetLng = prop.lng;
-        }
-      }
-
-      onClickRef.current(targetLat, targetLng);
+      onClickRef.current(featureId, lat, lng);
     });
 
     mapRef.current = map;

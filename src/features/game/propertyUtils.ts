@@ -86,27 +86,18 @@ export function tierLabel(tier: PropertyTier): string {
   return TIER_LABELS[tier];
 }
 
-export function coordsToId(lat: number, lng: number): string {
-  const p = 3000;
-  const snappedLat = Math.round(lat * p) / p;
-  const snappedLng = Math.round(lng * p) / p;
-  return `${snappedLat.toFixed(4)}_${snappedLng.toFixed(4)}`;
-}
-
 export function buildProperty(
-  id: string,
+  featureId: number | string,
   rawLat: number,
   rawLng: number,
 ): Property {
-  const p = 3000;
-  const lat = Math.round(rawLat * p) / p;
-  const lng = Math.round(rawLng * p) / p;
-  const basePrice = deriveBasePrice(lat, lng);
+  const basePrice = deriveBasePrice(rawLat, rawLng);
   return {
-    id,
-    name: derivePropertyName(lat, lng),
-    lat,
-    lng,
+    id: String(featureId),
+    featureId,
+    name: derivePropertyName(rawLat, rawLng),
+    lat: rawLat,
+    lng: rawLng,
     basePrice,
     marketPrice: basePrice,
     purchasePrice: null,

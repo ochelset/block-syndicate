@@ -13,7 +13,9 @@ export function App() {
   const [screen, setScreen] = useState<Screen>('start');
   const [modal, setModal] = useState<Modal>(null);
   const [savedGame] = useState(() => loadSave());
-  const { state, dispatch, selectBlock, netWorth } = useGameState();
+  const { state, dispatch, selectBlock, netWorth } = useGameState(
+    screen === 'game',
+  );
 
   const ownedProperties = Object.values(state.properties).filter(
     p => p.purchasePrice !== null,

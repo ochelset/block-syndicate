@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   calcRentPerDay,
   calcUpgradeCost,
-  coordsToId,
   deriveBasePrice,
   formatMoney,
   nextTier,
@@ -87,25 +86,6 @@ describe('tierLabel', () => {
     expect(tierLabel('vacant')).toBe('VACANT LOT');
     expect(tierLabel('shop')).toBe('SHOP');
     expect(tierLabel('restaurant')).toBe('RESTAURANT');
-  });
-});
-
-describe('coordsToId', () => {
-  it('produces the same ID for the same coordinates', () => {
-    expect(coordsToId(59.9139, 10.7522)).toBe(coordsToId(59.9139, 10.7522));
-  });
-
-  it('snaps nearby coordinates to the same ID', () => {
-    // 1/3000 degree ≈ 37m — coords within snapping grid should match
-    const id1 = coordsToId(59.9139, 10.7522);
-    const id2 = coordsToId(59.91391, 10.75221);
-    expect(id1).toBe(id2);
-  });
-
-  it('produces different IDs for coordinates in different grid cells', () => {
-    const id1 = coordsToId(59.9, 10.7);
-    const id2 = coordsToId(59.91, 10.71);
-    expect(id1).not.toBe(id2);
   });
 });
 
